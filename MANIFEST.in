@@ -1,0 +1,3 @@
+recursive-include definex/plugin/templates *.tmpl
+recursive-include definex/plugin/templates/simple *.tmpl
+include README.md

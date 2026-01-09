@@ -1,0 +1,14 @@
+from definex.sdk import BasePlugin, action
+from typing import Annotated, List
+
+class Tag:
+    id: Annotated[int, "标签ID"]
+    label: Annotated[str, "标签文字"]
+
+class CollectionPlugin(BasePlugin):
+    """展示集合类型(Array)及泛型约束的样例"""
+
+    @action
+    def batch_tags(self,
+                   tag_list: Annotated[List[Tag], "必须指定泛型, 映射为 array"]) -> Annotated[List[str], "返回字符串数组"]:
+        return [t.label for t in tag_list]

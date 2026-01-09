@@ -1,0 +1,13 @@
+from definex.sdk import BasePlugin, action
+from typing import Annotated
+
+class BasicTypePlugin(BasePlugin):
+    """展示基础类型映射的样例"""
+
+    @action
+    def handle_primitives(self,
+                          text: Annotated[str, "映射为 string"],
+                          count: Annotated[int, "映射为 number"],
+                          price: Annotated[float, "映射为 number"],
+                          active: Annotated[bool, "映射为 boolean"]) -> Annotated[str, "结果"]:
+        return f"Received: {text}, {count}, {price}, {active}"

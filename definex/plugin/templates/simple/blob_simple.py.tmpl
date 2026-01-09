@@ -1,0 +1,14 @@
+from definex.sdk import BasePlugin, action
+from typing import Annotated
+
+class FileInfo:
+    raw_data: Annotated[bytes, "文件二进制流"] # 映射为 blob
+    ext: Annotated[str, "文件后缀名"]
+
+class BlobPlugin(BasePlugin):
+    """二进制文件建模示例"""
+
+    @action(category="exec")
+    def upload_file(self, file: Annotated[FileInfo, "上传的文件对象"]) -> Annotated[str, "存储路径"]:
+        """处理文件上传并返回路径"""
+        return f"/storage/file.{file.ext}"

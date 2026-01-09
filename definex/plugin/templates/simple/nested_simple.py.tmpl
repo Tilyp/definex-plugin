@@ -1,0 +1,18 @@
+from definex.sdk import BasePlugin, action
+from typing import Annotated
+
+class Address:
+    city: Annotated[str, "城市名称"]
+    zip_code: Annotated[str, "邮政编码"]
+
+class UserProfile:
+    name: Annotated[str, "用户姓名"]
+    location: Annotated[Address, "居住地址结构"] # 嵌套对象
+
+class NestedPlugin(BasePlugin):
+    """嵌套对象建模示例"""
+
+    @action(category="exec")
+    def update_profile(self, profile: Annotated[UserProfile, "用户信息"]) -> Annotated[UserProfile, "更新后的信息"]:
+        """更新用户档案（含嵌套地址）"""
+        return profile

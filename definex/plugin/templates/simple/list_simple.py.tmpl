@@ -1,0 +1,21 @@
+from definex.sdk import BasePlugin, action
+from typing import Annotated, List
+
+class TaskItem:
+    task_id: Annotated[int, "任务唯一标识"]
+    title: Annotated[str, "任务标题"]
+
+class TaskList:
+    tasks: Annotated[List[TaskItem], "任务列表详情"]
+    total: Annotated[int, "任务总数"]
+
+class ListPlugin(BasePlugin):
+    """列表与集合建模示例"""
+
+    @action(category="exec")
+    def get_all_tasks(self) -> Annotated[TaskList, "完整的任务列表对象"]:
+        """获取所有待办任务"""
+        return {
+            "tasks": [{"task_id": 1, "title": "完成 DefineX 文档"}],
+            "total": 1
+        }

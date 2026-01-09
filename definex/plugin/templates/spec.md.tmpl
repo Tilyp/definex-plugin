@@ -1,0 +1,255 @@
+# DefineX (dfx) 插件开发规范手册 ({{ plugin_name }})
+
+本手册是 **DefineX** 插件开发的权威指南。DefineX 采用 **契约先行 (Schema-First)** 的设计哲学，通过强类型约束和自动化的元数据提取，确保插件在编排引擎、AI 模型（MCP 协议）及低代码平台中的高度兼容性与执行确定性。
+
+---
+
+## 1. 插件基本信息
+- **插件名称**: {{ plugin_name }}
+- **唯一标识 (ID)**: `{{ plugin_id }}`
+  *(注：该 ID 由系统算法随机生成，用于云端发布及 MCP 客户端识别，请勿手动修改)*
+- **环境要求**: Python ≥ 3.9.0
+- **虚拟环境**: `{{ plugin_name }}_venv` (已自动创建并安装依赖)
+- **项目状态**:
+  - 开发环境: {{ env_type }} (已初始化)
+  - 契约版本: V2 (inputSchema/outputSchema 标准)
+
+---
+
+## 2. 目录结构规范
+插件项目必须遵循以下目录组织方式，严禁随意更改文件夹名称：
+
+| 路径 | 权限 | 说明 |
+| :--- | :--- | :--- |
+| **`tools/`** | 开发者 | **核心逻辑目录**。所有业务 Python 代码必须存放于此。支持多文件递归扫描。 |
+| **`simple/`** | 开发者 | **分类建模样例**。包含配置类、嵌套类、集合类及文件类参考代码。 |
+| **`manifest.yaml`** | 系统/开发者 | **插件契约清单**。描述插件信息及所有 Action 的输入输出 Schema。 |
+| **`requirements.txt`** | 开发者 | **依赖声明**。必须指定精确版本号（如 `requests==2.31.0`）。 |
+| **`.venv/`** | 系统生成 | **本地开发环境**。包含 SDK 依赖，用于代码补全与调试。 |
+| **`libs/`** | 构建生成 | **隔离运行环境**。`build` 阶段自动生成的依赖库，随插件包分发。 |
+
+---
+
+## 3. 核心开发准则
+
+### 3.1 插件基类与 Action 声明
+- **继承要求**: 所有工具类必须继承 `from definex.sdk import BasePlugin`。
+- **标注要求**: 对外暴露的方法必须使用 `@action` 装饰器，并明确分类：
+  - `@action(category="config")`: **配置类**。用于设置 API Key、连接串等节点初始化参数。
+  - `@action(category="exec")`: **执行类**。用于处理具体业务逻辑（发送请求、处理数据等）。
+
+### 3.2 强类型契约 (禁止“黑盒”对象)
+为了实现 Schema 透明化，DefineX 强制要求所有数据结构必须可静态解析。**严禁使用以下类型**：
+- ❌ **禁止 `dict`**: 必须使用自定义类（Class）来描述对象结构。
+- ❌ **禁止 `Any`**: 破坏契约透明度，会导致 AI 无法理解工具用途。
+- ❌ **禁止未指定泛型的集合**: 严禁只写 `list`，必须明确为 `list[str]` 或 `List[MyClass]`。
+- ❌ **禁止多层嵌套**: 自定义类支持嵌套，但系统限制最大嵌套深度为 **3 层**。
+
+### 3.3 类型映射体系
+系统自动将 Python 类型映射为 DefineX 标准数据类型：
+
+| 系统标准类型 | Python 原生类型 | 约束条件 |
+| :--- | :--- | :--- |
+| **`string`** | `str` | 必须使用 `Annotated` 描述 |
+| **`number`** | `int` / `float` | 必须使用 `Annotated` 描述 |
+| **`boolean`** | `bool` | 必须使用 `Annotated` 描述 |
+| **`array`** | `list[T]` / `set[T]` | **必须指定泛型 T**，严禁使用 `list` |
+| **`object`** | `自定义 Class` | 属性必须带注解，嵌套层数限制为 3 |
+| **`blob`** | `bytes` | 用于传输二进制或文件流 |
+| **`null`** | `NoneType` | 表示空值 |
+| **`INVALID`** | `dict` / `Any` | **禁止使用**，校验阶段将拦截 |
+
+---
+
+## 4. 结构化建模与示例
+
+所有输入（`inputSchema`）与输出（`outputSchema`）必须具备详尽的描述。请务必使用 `Annotated` 进行标注。
+
+### 示例代码：
+```python
+from definex.sdk import BasePlugin, action
+from typing import Annotated, List
+
+# 1. 定义对象结构（代替 dict）
+class FileDetail:
+    name: Annotated[str, "文件名"]
+    size: Annotated[int, "字节数"]
+
+class SearchResponse:
+    files: Annotated[List[FileDetail], "搜索到的文件列表"]
+    status: Annotated[str, "执行状态"]
+
+## 5. 快速开始
+1. **激活环境**:
+   - Linux/macOS: `source {{ plugin_name }}_env/bin/activate`
+   - Windows: `{{ plugin_name }}_env\Scripts\activate
+
+# 2. 插件类实现
+class MyPlugin(BasePlugin):
+    """文件搜索助手"""
+
+    @action(category="exec")
+    def find_files(self,
+                   keyword: Annotated[str, "搜索关键词"]) -> Annotated[SearchResponse, "搜索结果对象"]:
+        """根据关键词检索目录下的文件"""
+        # 注意：禁止返回 dict，返回值必须匹配 SearchResponse 结构
+        return {
+            "files": [{"name": "report.pdf", "size": 1024}],
+            "status": "success"
+        }
+```
+
+---
+
+## 5. DefineX (dfx) 指令集 (CLI Lifecycle)
+
+本章节详细列出了 **DefineX CLI** 的所有可用指令及其参数说明。`dfx` 采用分层结构管理，所有插件相关的核心功能均收敛于 `plugin` 子命令下。
+
+---
+
+### 5.1 指令架构树
+```text
+dfx
+└── plugin
+    ├── init        # 初始化项目
+    ├── manifest    # 同步契约元数据
+    ├── check       # 合规性与对齐审计
+    ├── watch       # 自动化监听哨兵
+    ├── build       # 隔离环境打包
+    ├── push        # 发布至云端
+    └── run         # 运行中心
+        ├── native  # 原生执行 (Single/REPL/Debug)
+        └── mcp     # 协议执行 (Stdio/HTTP/SSE)
+```
+
+---
+
+### 5.2 插件生命周期指令
+
+#### 5.2.1 项目初始化 (init)
+创建一个符合 DefineX 工业标准的插件工程。
+- **命令**: `dfx plugin init <name>`
+- **交互参数**:
+    - **Author**: 插件作者。
+    - **Version**: 初始版本号（默认 1.0.0）。
+    - **Icon**: 从内置图标库选择一个代表插件功能的 Emoji。
+    - **Environment**: 选择 `System` 或 `Virtual Env`（推荐，自动创建并配置隔离开发环境）。
+- **产物**: 生成 `tools/`、`simple/` 样例、`spec.md` 及虚拟环境目录。
+
+#### 5.2.2 契约同步 (manifest)
+扫描源码并更新 `manifest.yaml`，实现代码即契约。
+- **命令**: `dfx plugin manifest [path]`
+- **核心逻辑**:
+    - 递归扫描 `tools/` 目录下所有被 `@action` 标注的方法。
+    - 自动提取参数描述（Annotated）并生成 `inputSchema` 和 `outputSchema`。
+    - **智能合并**: 保留手动修改的元数据，仅更新 actions 定义。
+
+#### 5.2.3 合规性审计 (check)
+在打包发布前执行“地狱级”严格检查，确保契约 100% 准确。
+- **命令**: `dfx plugin check [path]`
+- **校验项**:
+    - **源码对齐**: 检查 Python 方法签名是否与 YAML 记录一致。
+    - **契约审计**: 禁止 `dict`/`Any` 类型，强制要求字段描述，限制嵌套层级 ≤ 3。
+    - **依赖检查**: 检查 `requirements.txt` 每一行是否都锁定了版本号。
+    - **安全扫描**: 检索代码中是否包含 `eval`、`os.system` 等高危调用。
+
+#### 5.2.4 自动化监听 (watch)
+开启“哨兵模式”，实时监控开发变动。
+- **命令**: `dfx plugin watch [path]`
+- **触发逻辑**:
+    - 监听 `tools/` 目录。
+    - 文件保存时：**自动清屏** -> **自动 manifest** -> **自动 check**。
+    - 开发者可以一边写代码，一边在终端实时查看合规反馈。
+
+---
+
+### 5.3 运行中心 (run)
+
+`run` 子命令支持两种截然不同的运行环境：
+
+#### 5.3.1 原生测试模式 (native)
+用于本地开发自测，不涉及网络协议。
+- **命令**: `dfx plugin run native [path] [options]`
+- **子模式**:
+    - **单次执行**: `--action <name> --params '<json>'`（返回结果后退出）。
+    - **REPL 交互**: `--repl`（启动交互式终端，支持连续发送指令）。
+    - **程序交互 (Debug)**: `--debug`（启动标准 JSON 流接口，供外部程序作为子进程调用）。
+- **可选开关**: `--watch`（代码变动后自动重载运行时缓存）。
+
+#### 5.3.2 AI 协议模式 (mcp)
+将插件转为标准 **Model Context Protocol** 服务，供 AI 客户端调用。
+- **命令**: `dfx plugin run mcp [path] [options]`
+- **协议选项**:
+    - `--protocol stdio`: (默认) 标准输入输出，用于本地 Cursor/Claude 挂载。
+    - `--protocol sse --port 8080`: SSE 持久连接，用于远程 AI 调用。
+    - `--protocol http --port 8080`: 标准 HTTP 请求模式。
+- **可选开关**: `--watch`（变动时自动刷新契约，保持 AI 识别的信息最新）。
+
+---
+
+### 5.4 打包与分发指令
+
+#### 5.4.1 隔离构建 (build)
+生成自包含的 `.dfxpkg` 插件包。
+- **命令**: `dfx plugin build [path]`
+- **核心动作**:
+    - 强制执行 `check` 审计。
+    - **依赖隔离**: 将 `requirements.txt` 依赖下载至包内 `libs/` 目录。
+    - **增量同步**: 基于 Hash 判断，依赖未变动时秒级完成构建。
+    - **排除冗余**: 自动剔除 `simple/` 样例、`__pycache__` 及虚拟环境目录。
+
+#### 5.4.2 云端发布 (push)
+- **命令**: `dfx plugin push [path] --url <url> --token <token>`
+- **功能**: 执行 `build` 并在成功后将 `.dfxpkg` 上传至指定服务器，完成一键上线。
+
+---
+
+### 5.5 配置指令
+
+#### 5.4.1 配置 llm (config)
+- **命令**: dfx plugin config llm
+说明: 配置用于 AI 生成代码的大模型参数。
+参数:
+--api-key: 必填。你的 LLM 密钥。
+--model: 选填。默认 gpt-4o。
+--url: 选填。如果你使用代理（如中转接口）则需要填写。
+示例: dfx plugin config llm --api-key sk-xxx --model gpt-4o-mini
+
+#### 5.4.2 配置 push (config)
+- **命令**: dfx plugin config push
+说明: 配置默认的服务器发布信息，配置后执行 dfx plugin push 可不带参数。
+参数:
+--url: DefineX 接收包的 API 地址。
+--token: 个人访问令牌。
+示例: dfx plugin config push --url https://api.dfx.com/v1/upload
+
+### 5.6 AI 编程指令
+
+- **命令**: dfx plugin code
+说明: 进入 AI 结对编程模式。
+工作流:
+系统自动读取当前 tools/ 目录下所有文件。
+将代码和 DefineX 开发规范发送给 LLM 作为上下文。
+开发者描述需求：“帮我加一个图片压缩 Action”。
+AI 生成符合 Annotated 规范的代码。
+输入 write：自动将代码写入 tools/main.py。
+选项: --chat 切换为纯咨询模式，不强制要求返回代码块。
+
+
+---
+
+## 6. MCP (Model Context Protocol) 兼容性
+DefineX 插件天然兼容 MCP 协议。你可以将生成的 `.dfxpkg` 挂载至 Claude Desktop 或 Cursor：
+- **原理**: `dfx` 会将 `inputSchema` 映射为标准的 MCP Tools 定义。
+- **配置示例**:
+  ```json
+  "mcpServers": {
+    "definex-plugin-{{ plugin_id }}": {
+      "command": "dfx",
+      "args": ["plugin", "run", "mcp", "/path/to/{{ plugin_id }}.dfxpkg"]
+    }
+  }
+  ```
+
+---
+**DefineX CLI - 让工具具备确定性，让编排具备生命力。**

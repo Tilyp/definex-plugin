@@ -1,0 +1,14 @@
+from definex.sdk import BasePlugin, action
+from typing import Annotated
+
+class AuthConfig:
+    api_key: Annotated[str, "API 访问密钥"]
+    timeout: Annotated[int, "请求超时时间(秒)"]
+
+class ConfigPlugin(BasePlugin):
+    """配置类建模示例"""
+
+    @action(category="config")
+    def init_auth(self, config: Annotated[AuthConfig, "鉴权配置"]) -> Annotated[bool, "是否配置成功"]:
+        """初始化全局鉴权信息"""
+        return True

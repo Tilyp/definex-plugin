@@ -1,0 +1,19 @@
+from definex.sdk import BasePlugin, action
+from typing import Annotated
+
+class UserAddress:
+    city: Annotated[str, "城市名称"]
+    street: Annotated[str, "街道地址"]
+
+class UserProfile:
+    name: Annotated[str, "姓名"]
+    address: Annotated[UserAddress, "嵌套地址对象 (最大3层)"]
+
+class ObjectTypePlugin(BasePlugin):
+    """展示自定义类及其属性解析的样例"""
+
+    @action
+    def register_user(self, profile: Annotated[UserProfile, "用户信息"]) -> Annotated[UserProfile, "回显对象"]:
+        # 系统会自动解析 UserProfile 内部的字段生成 inputSchema
+        return profile
+    

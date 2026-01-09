@@ -1,0 +1,28 @@
+from definex.plugin.sdk import BasePlugin, action
+from typing import Annotated
+
+# 定义输入对象必须平铺属性，必须有注解
+class TaskConfig:
+    target_id: Annotated[str, "目标任务ID"]
+    priority: Annotated[int, "优先级 (1-10)"]
+
+# 定义输出对象  必须平铺属性，必须有注解
+class ProcessResult:
+    success: Annotated[bool, "是否处理成功"]
+    message: Annotated[str, "反馈消息"]
+
+class {{ class_name }}(BasePlugin):
+    """
+    DefineX 插件：已禁用直接使用 dict，输入输出为对象时必须使用自定义对象，参照TaskConfig和ProcessResult对象格式
+    """
+
+    @action(category="exec")
+    def run_process(self,
+                    config: Annotated[TaskConfig, "任务配置对象"]) -> Annotated[ProcessResult, "处理结果对象"]:
+        """
+        处理业务逻辑
+        """
+        pr = ProcessResult()
+        pr.success = True
+        pr.message = f"Task {config.target_id} done"
+        return pr
