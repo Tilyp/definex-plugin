@@ -12,8 +12,8 @@ from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
 from definex.plugin.core.console_utils import ConsoleFactory
-from definex.plugin.runtime import PluginRuntime
 from definex.plugin.runner.param_validate import ParamsValidate
+from definex.plugin.runtime import PluginRuntime
 
 
 class NativeRunner:

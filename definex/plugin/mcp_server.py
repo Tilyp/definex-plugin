@@ -1,12 +1,12 @@
-import sys
-from typing import Literal
 import json
+from typing import Literal
 
 from mcp.server import FastMCP
 from rich.console import Console
 
-from definex.plugin.runtime import PluginRuntime
 from definex.plugin.mcp_adapter import MCPAdapter
+from definex.plugin.runtime import PluginRuntime
+
 
 class DefineXMCPBridge:
     def __init__(self, console: Console, plugin_runtime : PluginRuntime):

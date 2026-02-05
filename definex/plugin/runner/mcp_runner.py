@@ -6,7 +6,7 @@ from typing import Any, Dict, Literal
 from rich.console import Console
 
 from definex.plugin.mcp_server import DefineXMCPBridge
-from plugin import PluginRuntime
+from definex.plugin.runtime import PluginRuntime
 
 
 class MCPRunner:

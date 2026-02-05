@@ -2,15 +2,13 @@
 DefineX 插件运行协调器 - 优化版本
 职责：只做运行模式分发和协调，不包含具体执行逻辑
 """
-
-from pathlib import Path
 from typing import Any, Dict, Optional
 
 from rich.console import Console
 
 from definex.plugin.runner.mcp_runner import MCPRunner
 from definex.plugin.runner.native_runner import NativeRunner
-from plugin import PluginRuntime
+from definex.plugin.runtime import PluginRuntime
 
 
 class RunnerCoordinator:
@@ -79,7 +77,6 @@ class RunnerCoordinator:
         return mode in ["native", "mcp"]
 
 # ==================== 工厂函数（保持向后兼容） ====================
-
 class PluginRunner(RunnerCoordinator):
     """向后兼容的别名"""
     pass

@@ -10,9 +10,9 @@ class ActionResponse:
                  data: Any = None,
                  message: str = "",
                  error_code: Optional[int] = None):
-        self.status = status        # "success" 或 "error"
-        self.data = data            # 实际的业务数据对象 (符合自定义类定义)
-        self.message = message      # 提示消息
+        self.status = status         # "success" 或 "error"
+        self.data = data             # 实际的业务数据对象 (符合自定义类定义)
+        self.message = message       # 提示消息
         self.error_code = error_code # 错误码 (可选)
 
     @classmethod
