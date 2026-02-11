@@ -1,4 +1,3 @@
-import functools
 from typing import Any, Optional
 
 MAX_NESTING_DEPTH = 3
@@ -24,17 +23,13 @@ PYTHON_TO_SYSTEM_MAP = {
     type(None): DataTypes.NULL,
 }
 
-
 def action(category="exec", stream=False):
     def decorator(func):
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs): return func(*args, **kwargs)
-        wrapper._is_action = True
-        wrapper._action_category = category
-        wrapper._is_streaming = stream
-        return wrapper
-    return decorator(category) if callable(category) else decorator
-
+        func._is_action = True
+        func._action_category = category
+        func._is_streaming = stream
+        return func # 保持原函数，由 Runtime 包装执行
+    return decorator
 
 class BasePlugin:
     def __init__(self, runtime_handle=None):

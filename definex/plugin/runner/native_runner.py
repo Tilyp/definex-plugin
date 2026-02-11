@@ -14,6 +14,7 @@ from watchdog.observers import Observer
 from definex.plugin.core.console_utils import ConsoleFactory
 from definex.plugin.runner.param_validate import ParamsValidate
 from definex.plugin.runtime import PluginRuntime
+from definex.plugin.sdk import ActionContext
 
 
 class NativeRunner:
@@ -33,7 +34,7 @@ class NativeRunner:
 
     def run(self,action: Optional[str] = None,
             params_json: Optional[str] = None, watch: bool = False,
-            repl: bool = False, debug: bool = False) -> Any:
+            repl: bool = False, debug: bool = False, context: ActionContext = None) -> Any:
         """
         执行原生模式运行
 
@@ -43,16 +44,17 @@ class NativeRunner:
             watch: 是否监控
             repl: 是否交互模式
             debug: 是否调试模式
+            context: 任务上下文
 
         Returns:
             运行结果
         """
         if repl:
-            return self._run_native_interactive(debug)
+            return self._run_native_interactive(debug, context)
         else:
-            return self._run_native_single(action, params_json, watch)
+            return self._run_native_single(action, params_json, watch, context)
 
-    def _run_native_single(self, action: str, params_json: str, watch: bool):
+    def _run_native_single(self, action: str, params_json: str, watch: bool, context: ActionContext):
         """执行单次运行"""
         def _exec():
             action_meta = self.plugin_runtime.get_action_metadata(action)
@@ -72,13 +74,13 @@ class NativeRunner:
                 is_streaming = action_meta.get("is_streaming", False)
                 if is_streaming:
                     self.console.print(f"[bold blue]实时流输出:[/bold blue]")
-                    for chunk in self.plugin_runtime.execute_stream(action_meta, params):
+                    for chunk in self.plugin_runtime.execute_stream(action_meta, params, context):
                         # 1. 人机交互模式：实时打印 delta
                         print(chunk["delta"], end="", flush=True)
                     print("\n")
                 else:
                     try:
-                        result = self.plugin_runtime.execute(action_meta, params)
+                        result = self.plugin_runtime.execute(action_meta, params, context)
                         self._print_success(result, is_machine=False)
                         return result
                     except Exception as e:
@@ -89,7 +91,7 @@ class NativeRunner:
         else:
             return _exec()
 
-    def _run_native_interactive(self, is_debug: bool):
+    def _run_native_interactive(self, is_debug: bool, context: ActionContext):
         """执行交互式运行"""
         # 具体的交互逻辑（从原PluginRunner中提取）
         console_factory = ConsoleFactory()
@@ -114,14 +116,14 @@ class NativeRunner:
                 if line.lower() in ["exit", "quit", "q"]:
                     break
 
-                self._process_line(line, is_debug)
+                self._process_line(line, is_debug, context)
             except (EOFError, KeyboardInterrupt):
                 self.console.print("\n[yellow]👋 退出交互模式[/yellow]")
                 break
             except Exception as e:
                 self._print_error(e, machine_mode)
 
-    def _process_line(self, line: str, is_debug: bool):
+    def _process_line(self, line: str, is_debug: bool, context: ActionContext):
         """处理输入行"""
         # 解析命令
         parts = line.split()
@@ -156,12 +158,12 @@ class NativeRunner:
                 is_streaming = action_meta.get("is_streaming", False)
                 if is_streaming:
                     self.console.print(f"[bold blue]实时流输出:[/bold blue]")
-                    for chunk in self.plugin_runtime.execute_stream(action_meta, params):
+                    for chunk in self.plugin_runtime.execute_stream(action_meta, params, context):
                         # 1. 人机交互模式：实时打印 delta
                         print(chunk["delta"], end="", flush=True)
                     print("\n")
                 else:
-                    result = self.plugin_runtime.execute(action_meta, params)
+                    result = self.plugin_runtime.execute(action_meta, params, context)
                     self._print_success(result, is_machine=False)
             except Exception as e:
                 self._print_error(e, is_machine=False)

@@ -8,7 +8,7 @@ from pathlib import Path
 
 import yaml
 
-from definex.plugin.sdk import StreamChunk
+from definex.plugin.sdk import StreamChunk, ActionContext
 
 
 class PluginRuntime:
@@ -62,11 +62,26 @@ class PluginRuntime:
         instance = getattr(module, action_meta["location"]["class"])
         return getattr(instance(), action_name)
 
-    def execute(self, action_meta: dict, params: dict):
+    def execute(self, action_meta: dict, params: dict, context: ActionContext):
         method = self.get_instance_by_action(action_meta)
-        return method(**params)
+        # 1. 执行业务函数
+        result =  method(**params)
+        # 2. 自动识别 Generator（针对大数据/流式任务）
+        if inspect.isgenerator(result):
+            final_list = []
+            for row in result:
+                # 自动中断检查：用户无需写一行代码
+                context.check_cancelled()
 
-    def execute_stream(self, action_meta: dict, params: dict):
+                # 自动数据采集与溢写监控
+                context.collector.add(row)
+
+                # 返回收集器的最终引用或数据
+            return context.collector.get_result()
+        # 3. 针对普通 return
+        return result
+
+    def execute_stream(self, action_meta: dict, params: dict, context: ActionContext):
         """执行流式 Action，返回一个 Python 生成器"""
         method = self.get_instance_by_action(action_meta)
         # 1. 执行方法获取结果

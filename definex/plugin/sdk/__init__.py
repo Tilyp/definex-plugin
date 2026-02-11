@@ -1,7 +1,7 @@
 from definex.plugin.sdk.base import BasePlugin, action, PYTHON_TO_SYSTEM_MAP, MAX_NESTING_DEPTH, COLLECTION_TYPES, \
-    StreamChunk
+    StreamChunk, DataTypes
 from definex.plugin.sdk.context import ActionContext, TracingInfo
-from definex.plugin.sdk.policy import DataTypes, ResourcePolicy
+from definex.plugin.sdk.policy import  ResourcePolicy
 from definex.plugin.sdk.response import ActionResponse
 from definex.plugin.sdk.types import TabularData, Image
 from definex.plugin.sdk.ui import UI, Color, ICON_LIBRARY

@@ -9,6 +9,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 from definex.plugin.runtime import PluginRuntime
+from plugin.sdk import ActionContext
 
 
 class PluginRemoteDebugger:
@@ -26,7 +27,7 @@ class PluginRemoteDebugger:
     def _get_ws_url(self, http_url: str):
         return http_url.replace("http", "ws").replace("/upload", "/debug")
 
-    def connect(self, root_path: Path, url: str, token: str, env_label: str, protocol: str):
+    def connect(self, root_path: Path, url: str, token: str, env_label: str, protocol: str, context: ActionContext):
         """建立连接入口"""
         # 0. 准备 Manifest
         self.generator.generate(root_path)
@@ -40,13 +41,13 @@ class PluginRemoteDebugger:
         ))
 
         if protocol == "ws":
-            asyncio.run(self._run_ws(root_path, url, token, manifest))
+            asyncio.run(self._run_ws(root_path, url, token, manifest, context))
         else:
-            asyncio.run(self._run_sse(root_path, url, token, manifest))
+            asyncio.run(self._run_sse(root_path, url, token, manifest, context))
 
 
     # --- WebSocket 实现 ---
-    async def _run_ws(self, root_path, http_url, token, manifest):
+    async def _run_ws(self, root_path, http_url, token, manifest, context: ActionContext):
         ws_url = http_url.replace("http", "ws").replace("/upload", "/debug/ws")
         headers = {"Authorization": f"Bearer {token}"}
 
@@ -63,7 +64,7 @@ class PluginRemoteDebugger:
                 async for message in ws:
                     data = json.loads(message)
                     if data.get("type") == "INVOKE":
-                        result = self._handle_invoke(root_path, data)
+                        result = self._handle_invoke(root_path, data, context)
                         await ws.send(json.dumps({
                             "type": "RESULT",
                             "request_id": data["request_id"],
@@ -73,7 +74,7 @@ class PluginRemoteDebugger:
             self.console.print(f"[bold red]❌ WS 连接中断:[/bold red] {e}")
 
     # --- SSE 实现 ---
-    async def _run_sse(self, root_path, http_url, token, manifest):
+    async def _run_sse(self, root_path, http_url, token, manifest, context: ActionContext):
         sse_url = http_url.replace("/upload", "/debug/sse")
         result_url = http_url.replace("/upload", "/debug/result")
         headers = {"Authorization": f"Bearer {token}"}
@@ -99,7 +100,7 @@ class PluginRemoteDebugger:
                         if line.startswith("data:"):
                             data = json.loads(line[5:])
                             if data.get("type") == "INVOKE":
-                                result = self._handle_invoke(root_path, data)
+                                result = self._handle_invoke(root_path, data, context)
                                 # SSE 必须通过独立的 POST 回传结果
                                 await client.post(result_url, json={
                                     "request_id": data["request_id"],
@@ -110,14 +111,14 @@ class PluginRemoteDebugger:
             self.console.print(f"[bold red]❌ SSE 连接异常:[/bold red] {e}")
 
 
-    async def _handle_invoke(self, req, root_path: Path):
+    async def _handle_invoke(self, req, root_path: Path, context: ActionContext):
         """执行本地代码并返回"""
         action, params = req["action"], req["params"]
         self.console.print(f"📥 [bold cyan]收到云端调用:[/bold cyan] {action}")
         try:
             # 实例化运行时执行本地代码
             rt = PluginRuntime(root_path)
-            result = rt.execute(action, params)
+            result = rt.execute(action, params, context)
             resp = {"status": "success", "payload": result}
             self.console.print(f"📤 [bold green]执行成功，结果已回传[/bold green]")
         except Exception as e:

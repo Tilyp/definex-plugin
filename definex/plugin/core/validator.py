@@ -305,9 +305,9 @@ class ProjectValidator:
         schema_type = schema["type"]
 
         # C. 类型枚举值合规性检查
-        if schema_type not in DataTypes.ALL_TYPES:
-            self.console.print(f"[red]❌ {context}: 未知类型 '{schema_type}'，允许的类型: {', '.join(DataTypes.ALL_TYPES)}[/red]")
-            return False
+        # if schema_type not in DataTypes.ALL_TYPES:
+        #     self.console.print(f"[red]❌ {context}: 未知类型 '{schema_type}'，允许的类型: {', '.join(DataTypes.ALL_TYPES)}[/red]")
+        #     return False
 
         # D. 递归处理对象类型
         if schema_type == "object":
