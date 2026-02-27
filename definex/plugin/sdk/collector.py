@@ -15,7 +15,7 @@ class RealtimeCollector:
     def add(self, row: Dict[str, Any]):
         """插件调用：实时添加数据行"""
         self._buffer.append(row)
-        self._current_buffer_bytes += ResourcePolicy.estimate_row_size(row)
+        self._current_buffer_bytes += ResourcePolicy.should_spill(row)
         self._is_active = True
 
         # 触发判断：字节数超限 或 行数达到 Group 限制
