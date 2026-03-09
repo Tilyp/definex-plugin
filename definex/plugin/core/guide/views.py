@@ -20,25 +20,10 @@ class MenuRenderer:
         """渲染主菜单"""
         menu = Table(show_header=False, box=None, padding=(0, 2))
 
-        menu.add_row("[1] ⚙️ 配置 LLM (AI 代码辅助)", "[dim]选择或配置 AI 模型[/dim]")
-        menu.add_row("[2] 🚀 配置发布环境 (Push)", "[dim]配置发布目标和凭证[/dim]")
-        menu.add_row("[3] 🛠️管理项目配置", "[dim]调整聊天和代码生成设置[/dim]")
-        menu.add_row("[4] 🤖 开启 AI 结对编程", "[dim]与 AI 共同编写代码[/dim]")
-        menu.add_row("[5] 📋 查看全局配置详情", "[dim]查看所有配置[/dim]")
+        menu.add_row("[1] 🚀 配置发布环境 (Push)", "[dim]配置发布目标和凭证[/dim]")
+        menu.add_row("[2] 🛠️ 管理项目配置", "[dim]调整项目设置[/dim]")
+        menu.add_row("[3] 📋 查看全局配置详情", "[dim]查看所有配置[/dim]")
         menu.add_row("[0] 🚪 退出引导", "[dim]回到命令行[/dim]")
-
-        return menu
-
-    def render_llm_menu(self) -> Table:
-        """渲染 LLM 配置菜单"""
-        menu = Table(show_header=False, box=None, padding=(0, 2))
-
-        menu.add_row("[1] 添加新模型", "[dim]配置新的 LLM 提供商[/dim]")
-        menu.add_row("[2] 切换当前模型", "[dim]选择要使用的模型[/dim]")
-        menu.add_row("[3] 删除模型", "[dim]移除已配置的模型[/dim]")
-        menu.add_row("[4] 查看所有模型", "[dim]查看所有模型[/dim]")
-        menu.add_row("[5] 校验所有模型配置", "[dim]校验所有模型配置[/dim]")
-        menu.add_row("[0] 返回", "[dim]回到主菜单[/dim]")
 
         return menu
 
@@ -57,10 +42,9 @@ class MenuRenderer:
         """渲染项目配置菜单"""
         menu = Table(show_header=False, box=None, padding=(0, 2))
 
-        menu.add_row("[1] 修改聊天配置", "[dim]调整聊天参数[/dim]")
-        menu.add_row("[2] 导出配置", "[dim]备份当前配置[/dim]")
-        menu.add_row("[3] 导入配置", "[dim]恢复已保存的配置[/dim]")
-        menu.add_row("[4] 重置配置", "[dim]恢复为默认值[/dim]")
+        menu.add_row("[1] 导出配置", "[dim]备份当前配置[/dim]")
+        menu.add_row("[2] 导入配置", "[dim]恢复已保存的配置[/dim]")
+        menu.add_row("[3] 重置配置", "[dim]恢复为默认值[/dim]")
         menu.add_row("[0] 返回", "[dim]回到主菜单[/dim]")
 
         return menu

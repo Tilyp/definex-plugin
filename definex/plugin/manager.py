@@ -8,7 +8,6 @@ from typing import Dict, Any, Optional, Annotated
 
 from rich.console import Console
 
-from definex.plugin.chat.engine import AICodeEngine
 from definex.plugin.config.manager import ConfigManager
 from definex.plugin.core.analyzer import CodeAnalyzer
 from definex.plugin.core.builder import PluginBuilder
@@ -45,7 +44,6 @@ class PluginManager:
         self._guide = None
         self._analyzer = None
         self._publisher = None
-        self._ai_engine = None
         self._config_handler = None
 
     # ==================== 懒加载属性 ====================
@@ -201,37 +199,21 @@ class PluginManager:
 
     def config(
         self,
-        section: Annotated[str, "配置节名称"],
+        section: Annotated[str, "配置节名称"] = None,
         env: Annotated[str, "环境名称"] = None,
-        api_key: Annotated[str, "API密钥"] = None,
-        model: Annotated[str, "模型名称"] = None,
-        base_url: Annotated[str, "基础URL"] = None,
-        url: Annotated[str, "发布地址URL"] = None,
+        url: Annotated[str, "发布地址 URL"] = None,
         token: Annotated[str, "认证令牌"] = None
     ) -> None:
         """
         管理配置 - 使用统一的配置处理器
-
+        
         Args:
-            section: 配置节名称 (llm/push/chat)
+            section: 配置节名称 (push)
             env: 环境名称 (仅push配置使用)
-            api_key: API密钥 (仅llm配置使用)
-            model: 模型名称 (仅llm配置使用)
-            base_url: 基础URL (仅llm配置使用)
-            url: 发布地址URL (仅push配置使用)
+            url: 发布地址 URL (仅push配置使用)
             token: 认证令牌 (仅push配置使用)
         """
-        if section == "llm":
-            success = self.config_handler.configure_llm(
-                model=model,
-                api_key=api_key,
-                base_url=base_url,
-                provider=None,  # 使用默认值
-                interactive=False
-            )
-            if success:
-                self.config_handler.show_config_status("llm")
-        elif section == "push":
+        if section == "push":
             success = self.config_handler.configure_push(
                 env=env,
                 url=url,
@@ -241,22 +223,9 @@ class PluginManager:
             )
             if success:
                 self.config_handler.show_config_status("push")
-        elif section == "chat":
-            # Chat配置需要更多参数，这里简化处理
-            data = {}
-            if api_key:
-                data["api_key"] = api_key
-            if model:
-                data["model"] = model
-            if base_url:
-                data["base_url"] = base_url
-
-            success = self.config_handler.configure_chat(data, interactive=False)
-            if success:
-                self.config_handler.show_config_status("chat")
         else:
-            self.console.print(f"[yellow]⚠️ 未知的配置节: {section}[/yellow]")
-            self.console.print("[dim]支持的配置节: llm, push, chat[/dim]")
+            self.console.print(f"[yellow]⚠️ 未知的配置节：{section}[/yellow]")
+            self.console.print("[dim]支持的配置节：push[/dim]")
 
     @ensure_project
     def push(self, path: str, env: Optional[str] = None,
@@ -292,20 +261,16 @@ class PluginManager:
     def code(
         self,
         path: Annotated[str, "项目路径"],
-        mode: Annotated[str, "AI编程模式"] = "code"
+        mode: Annotated[str, "模式"] = "code"
     ) -> None:
         """
-        AI编程辅助 - 调用 AICodeEngine
+        AI编程辅助功能已移除
 
         Args:
             path: 项目路径
-            mode: 模式 (code/chat等)
+            mode: 模式
         """
-        # 按需创建 AI 引擎
-        if self._ai_engine is None:
-            self._ai_engine = AICodeEngine(self.console, self.config_mgr)
-
-        self._ai_engine.chat(path, mode=mode)
+        self.console.print("[yellow]⚠️ AI编程辅助功能已移除[/yellow]")
 
     def run(self, path: str, mode: str = "native", action: Optional[str] = None,
             params_json: Optional[str] = None, protocol: str = "stdio",

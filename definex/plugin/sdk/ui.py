@@ -136,11 +136,10 @@ class UI:
 
 ICON_LIBRARY = {
     "1": {"icon": "🛠️", "label": "General Tool"},
-    "2": {"icon": "🤖", "label": "AI & LLM"},
-    "3": {"icon": "📁", "label": "File Management"},
-    "4": {"icon": "🌐", "label": "Web Integration"},
-    "5": {"icon": "🗄️", "label": "Database"},
-    "6": {"icon": "🛡️", "label": "Security"},
+    "2": {"icon": "📁", "label": "File Management"},
+    "3": {"icon": "🌐", "label": "Web Integration"},
+    "4": {"icon": "🗄️", "label": "Database"},
+    "5": {"icon": "🛡️", "label": "Security"},
 }
 
 class Color:

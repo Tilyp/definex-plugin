@@ -55,7 +55,14 @@ class PushManager:
             timeout: 请求超时时间（秒）
             enabled: 是否启用该环境
             set_as_default: 是否设为默认环境
+
+        Raises:
+            ValueError: 当环境名称为空时
+            ConfigException: 当 URL 或 Token 为空，或保存失败时
         """
+        if not env_name:
+            raise ValueError("环境名称不能为空")
+
         if not url or not token:
             raise ConfigException("发布环境的 URL 和 Token 不能为空")
 

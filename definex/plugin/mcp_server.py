@@ -52,7 +52,7 @@ class DefineXMCPBridge:
                 else:
                     # 同步调用
                     result = self.plugin_runtime.execute(action_name, kwargs)
-                    # 序列化为字符串返回给 AI
+                    # 序列化为字符串返回
                     return json.dumps(result, ensure_ascii=False)
             except Exception as e:
                 return f"Error executing {action_name}: {str(e)}"

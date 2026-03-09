@@ -9,7 +9,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 from definex.plugin.runtime import PluginRuntime
-from plugin.sdk import ActionContext
+from definex.plugin.sdk import ActionContext
 
 
 class PluginRemoteDebugger:

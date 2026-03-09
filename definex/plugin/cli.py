@@ -11,14 +11,14 @@ def main():
     # 1. 创建主解析器
     parser = argparse.ArgumentParser(
         prog="dfx",
-        description="DefineX (dfx) - 工业级插件开发、编排与 AI 协议转换工具",
+        description="DefineX (dfx) - 工业级插件开发与编排脚手架",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 使用示例:
   dfx plugin init my_plugin             # 初始化新插件
   dfx plugin watch                      # 开启自动化监听哨兵
   dfx plugin run native --repl          # 进入交互式测试终端
-  dfx plugin run mcp --protocol sse     # 启动远程 AI 协议服务
+  dfx plugin run mcp --protocol stdio   # 启动 MCP 协议服务
   dfx plugin build                      # 构建并打包依赖隔离环境
         """
     )
@@ -78,7 +78,7 @@ def main():
     native_p.add_argument("--watch", action="store_true", help="启用代码热重载")
 
     # dfx plugin run mcp
-    mcp_p = run_mode_sub.add_parser("mcp", help="AI 协议模式 (对接 Model Context Protocol)")
+    mcp_p = run_mode_sub.add_parser("mcp", help="MCP 协议模式 (对接 Model Context Protocol)")
     mcp_p.add_argument("path", nargs="?", default=".", help="插件路径")
     mcp_p.add_argument("--protocol", choices=["stdio", "http", "sse"], default="stdio", help="传输协议 (默认: stdio)")
     mcp_p.add_argument("--port", type=int, default=8080, help="服务端口 (仅 http/sse 模式有效)")
@@ -88,17 +88,14 @@ def main():
     config_parser = plugin_sub.add_parser("config", help="管理全局配置")
     config_sub = config_parser.add_subparsers(dest="config_type", required=True)
 
-    # dfx plugin config llm
-    llm_p = config_sub.add_parser("llm", help="配置大模型信息")
-    llm_p.add_argument("--api-key", help="API Key")
-    llm_p.add_argument("--model", help="模型名称 (如 gpt-4o)")
-    llm_p.add_argument("--url", help="Base URL / Proxy URL")
-
     # --- [plugin config push] ---
     push_cfg_p = config_sub.add_parser("push", help="配置发布环境")
     push_cfg_p.add_argument("env", help="环境名称 (如 dev, prod)")
     push_cfg_p.add_argument("--url", help="服务器上传地址")
     push_cfg_p.add_argument("--token", help="认证 Token")
+
+    # --- [plugin config llm] (placeholder) ---
+    llm_cfg_p = config_sub.add_parser("llm", help="配置 LLM (已移除)")
 
     # dfx plugin push
     push_p = plugin_sub.add_parser("push", help="发布插件到指定环境")
@@ -108,9 +105,8 @@ def main():
     push_p.add_argument("--token", help="手动指定 Token (覆盖配置)")
 
     # --- [plugin code] ---
-    code_p = plugin_sub.add_parser("code", help="启动 AI 辅助编码")
+    code_p = plugin_sub.add_parser("code", help="AI 辅助编码 (已移除)")
     code_p.add_argument("path", nargs="?", default=".", help="路径")
-    code_p.add_argument("--chat", action="store_true", help="普通对话模式 (不强制生成代码)")
 
     # --- [plugin remote debugger] ---
     debug_p = plugin_sub.add_parser("debug", help="启动远程调试模式 (实时连接云端工作流)")
@@ -175,18 +171,14 @@ def main():
             elif args.command == "push":
                 mgr.push(args.path, env=args.env, url=args.url, token=args.token)
             elif args.command == "config":
-                # 统一传递所有可能的参数，由config方法根据section决定使用哪些
                 mgr.config(
                     section=args.config_type,
                     env=getattr(args, 'env', None),
-                    api_key=getattr(args, 'api_key', None),
-                    model=getattr(args, 'model', None),
-                    base_url=getattr(args, 'url', None),  # 注意：cli中的--url对应base_url
-                    url=getattr(args, 'url', None),  # push配置中的url
+                    url=getattr(args, 'url', None),
                     token=getattr(args, 'token', None)
                 )
             elif args.command == "code":
-                mgr.code(args.path, mode="chat" if args.chat else "code")
+                mgr.code(args.path, mode="code")
             # 运行命令处理
             elif args.command == "run":
                 if args.mode == "native":

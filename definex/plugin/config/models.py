@@ -1,5 +1,5 @@
 """
-配置数据模型定义（Push和Chat相关）
+配置数据模型定义（Push 相关）
 """
 from dataclasses import dataclass, field
 from typing import Dict, Any, Optional
@@ -68,37 +68,3 @@ class PushConfig:
         if self.default_environment and self.default_environment in self.environments:
             return self.environments[self.default_environment]
         return None
-
-
-@dataclass
-class ChatConfig:
-    """聊天相关配置"""
-    max_history_length: int = 10
-    max_context_tokens: int = 4000
-    enable_streaming: bool = True
-    auto_save_code: bool = False
-    code_output_dir: str = "tools"
-    default_filename: str = "main.py"
-
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'ChatConfig':
-        """从字典创建配置"""
-        return cls(
-            max_history_length=data.get("max_history_length", 10),
-            max_context_tokens=data.get("max_context_tokens", 4000),
-            enable_streaming=data.get("enable_streaming", True),
-            auto_save_code=data.get("auto_save_code", False),
-            code_output_dir=data.get("code_output_dir", "tools"),
-            default_filename=data.get("default_filename", "main.py")
-        )
-
-    def to_dict(self) -> Dict[str, Any]:
-        """转换为字典"""
-        return {
-            "max_history_length": self.max_history_length,
-            "max_context_tokens": self.max_context_tokens,
-            "enable_streaming": self.enable_streaming,
-            "auto_save_code": self.auto_save_code,
-            "code_output_dir": self.code_output_dir,
-            "default_filename": self.default_filename
-        }

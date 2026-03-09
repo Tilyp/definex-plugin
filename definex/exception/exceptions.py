@@ -204,30 +204,6 @@ class ServerException(PublishException):
 
 
 # ============================================================================
-# AI/聊天异常
-# ============================================================================
-
-class AIException(DefinexException):
-    """AI 相关异常"""
-    pass
-
-
-class LLMConnectionException(AIException):
-    """LLM 连接失败"""
-    pass
-
-
-class LLMException(AIException):
-    """LLM 调用异常"""
-    pass
-
-
-class CodeGenerationException(AIException):
-    """代码生成失败"""
-    pass
-
-
-# ============================================================================
 # 工具异常
 # ============================================================================
 
@@ -287,11 +263,6 @@ EXCEPTION_HIERARCHY = {
             "AuthenticationException",
             "ServerException"
         ],
-        "AIException": [
-            "LLMConnectionException",
-            "LLMException",
-            "CodeGenerationException"
-        ],
         "ToolException": [
             "FileOperationException",
             "DirectoryException"
@@ -327,7 +298,7 @@ def convert_to_definex_exception(exc: Exception) -> DefinexException:
         "ValueError": TypeValidationException,
         "TypeError": TypeValidationException,
         "TimeoutError": ExecutionTimeoutException,
-        "ConnectionError": LLMConnectionException,
+        "ConnectionError": DefinexException,
     }
     
     exception_class = mapping.get(exc_type, DefinexException)
@@ -430,12 +401,6 @@ __all__ = [
     "UploadException",
     "AuthenticationException",
     "ServerException",
-    
-    # AI 异常
-    "AIException",
-    "LLMConnectionException",
-    "LLMException",
-    "CodeGenerationException",
     
     # 工具异常
     "ToolException",

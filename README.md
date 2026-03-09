@@ -1,5 +1,10 @@
 # DefineX (dfx) - 插件开发与编排脚手架工具
 
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Type checked: mypy](https://img.shields.io/badge/type%20checked-mypy-007ec6.svg)](https://mypy.readthedocs.io/)
+[![Tests: pytest](https://img.shields.io/badge/tests-pytest-9400d3.svg)](https://pytest.org/)
+
 ---
 
 ## 第一章：设计思想 (Design Philosophy)
@@ -82,6 +87,70 @@ definex/
 4.  **AI 对接**：运行 `dfx plugin run mcp --protocol stdio` 并在 Cursor 中挂载。
 5.  **发布构建**：执行 `dfx plugin build` 产生最终的 `.dfxpkg` 隔离环境包。
 
+---
+
+## 第五章：测试与质量保证
+
+### 包管理工具选择
+
+本项目使用 UV 作为包管理工具（比 pip 快 10-100 倍）。
+
+#### 安装 UV 并设置项目 ⚡
+```bash
+# 安装 UV（如果尚未安装）
+pip install uv
+
+# 创建虚拟环境
+uv venv
+source .venv/bin/activate  # Linux/macOS
+.venv\Scripts\activate     # Windows
+
+# 快速安装开发依赖
+uv pip install -r requirements.txt
+
+# 安装项目本身
+uv pip install -e .
+```
+
+**详细说明**: 查看 [UV_USAGE.md](UV_USAGE.md) 了解完整的 UV 使用指南。
+
+### 运行测试
+```bash
+# 安装开发依赖（推荐使用 uv）
+uv pip install -r requirements.txt
+
+# 运行所有测试
+pytest
+
+# 查看测试覆盖率
+pytest --cov=definex --cov-report=html
+open htmlcov/index.html
+
+# 运行单个测试文件
+pytest tests/unit/test_config_manager.py -v
+```
+
+### 代码质量检查
+```bash
+# 格式化代码
+black definex/ tests/
+isort definex/ tests/
+
+# 类型检查
+mypy definex/ --ignore-missing-imports
+
+# 风格检查
+flake8 definex/
+```
+
+### Pre-commit Hooks
+```bash
+# 安装 pre-commit
+pre-commit install
+
+# 手动运行所有 hooks
+pre-commit run --all-files
+```
 
 ---
 
@@ -93,10 +162,10 @@ definex/
 ### 1. 编译打包
 在 `setup.py` 所在的根目录下执行：
 ```bash
-# 1. 安装构建工具
-pip install build
+# 安装构建工具
+uv pip install build
 
-# 2. 执行构建：生成源代码分发包 (tar.gz) 和二进制分发包 (wheel)
+# 执行构建：生成源代码分发包 (tar.gz) 和二进制分发包 (wheel)
 python -m build
 ```
 构建产物将保存在 `dist/` 目录下：
@@ -108,12 +177,12 @@ python -m build
 在开发环境下安装，修改代码后 `dfx` 命令实时生效。
 ```bash
 cd DefineX
-pip install -e .
+uv pip install -e .
 ```
 
 **正式分发安装**：
 ```bash
-pip install dist/definex-0.1.7-py3-none-any.whl
+uv pip install dist/definex-0.1.7-py3-none-any.whl
 ```
 
 ---

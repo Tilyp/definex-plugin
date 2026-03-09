@@ -48,23 +48,9 @@ class FileStorage(StorageInterface):
             default_config = {
                 "version": "1.0.0",
                 "last_updated": datetime.now().isoformat(),
-                "llm": {
-                    "current_model": "",
-                    "models": {},
-                    "default_temperature": 0.7,
-                    "default_max_tokens": 2000
-                },
                 "push": {
                     "default": "",
                     "environments": {}
-                },
-                "chat": {
-                    "max_history_length": 10,
-                    "max_context_tokens": 4000,
-                    "enable_streaming": True,
-                    "auto_save_code": False,
-                    "code_output_dir": "tools",
-                    "default_filename": "main.py"
                 }
             }
             self.save(default_config)

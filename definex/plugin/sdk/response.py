@@ -3,7 +3,7 @@ from typing import Any, Optional, Dict
 from pathlib import Path
 
 # 内部依赖
-from .policy import ResourcePolicy
+from definex.plugin.sdk.policy import ResourcePolicy
 
 class ActionResponse:
     """
@@ -22,7 +22,7 @@ class ActionResponse:
                  trace_context: Any = None):
         self.status = status        # "success" 或 "error"
         self.data = data            # 业务数据载荷
-        self.message = message      # 执行摘要（供 AI 和前端展示）
+        self.message = message      # 执行摘要
         self.error_code = error_code # 错误码（可选）
 
         # 审计元数据（自动从 context 中提取或在运行中更新）
@@ -46,23 +46,27 @@ class ActionResponse:
         """便捷失败工厂方法"""
         return cls(status="error", message=message, error_code=error_code, data=data, trace_context=ctx)
 
-    def finalize(self, storage_provider=None) -> Dict[str, Any]:
+    def finalize(self, context, storage_provider=None, ) -> Dict[str, Any]:
         """
         [核心逻辑] 响应最终化处理：
-        1. 检查数据体积，决定是否进行自适应溢写
-        2. 补全性能度量指标
-        3. 执行最终序列化
+        1. 自动注入 Trace 和资源统计
+        2. 检查数据体积，决定是否进行自适应溢写
+        3. 补全性能度量指标
+        4. 执行最终序列化
         """
-        # 1. 检查是否已经是引用 (如果是 TabularData 等类型，标记 type)
+        # 1. 自动注入 Trace 和资源统计
+        self.metadata.update(context.capture_metrics())
+
+        # 2. 检查是否已经是引用 (如果是 TabularData 等类型，标记 type)
         if hasattr(self.data, 'is_ref') and self.data.is_ref:
             self.metadata["data_info"]["is_ref"] = True
 
-        # 2. 自动溢写判断：如果 data 是大型容器且未被标记为引用
+        # 3. 自动溢写判断：如果 data 是大型容器且未被标记为引用
         if self.status == "success" and not self.metadata["data_info"]["is_ref"]:
             if ResourcePolicy.should_spill(self.data):
                 self._spill_data(storage_provider)
 
-        # 3. 递归序列化返回字典
+        # 4. 递归序列化返回字典
         return self.to_dict()
 
     def _spill_data(self, storage_provider):

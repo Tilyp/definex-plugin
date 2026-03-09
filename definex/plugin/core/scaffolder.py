@@ -131,13 +131,14 @@ class ProjectScaffolder:
                 venv.create(venv_dir, with_pip=True)
                 progress.advance(task)
 
-                progress.update(task, description="⚡ 升级环境中的 Pip 工具...")
+                progress.update(task, description="⚡ 升级环境中的 Pip 工具并安装 uv...")
                 python_exe = venv_dir / ("Scripts\\python.exe" if sys.platform == "win32" else "bin/python")
                 subprocess.run([str(python_exe), "-m", "pip", "install", "--upgrade", "pip"], capture_output=True)
+                subprocess.run([str(python_exe), "-m", "pip", "install", "uv"], capture_output=True)
                 progress.advance(task)
 
-                progress.update(task, description="📦 正在安装核心依赖 (mcp/rich/fastmcp)...")
-                subprocess.run([str(python_exe), "-m", "pip", "install", "-r", str(plugin_root / "requirements.txt")], capture_output=True)
+                progress.update(task, description="📦 正在安装核心依赖 (uv/rich/fastmcp)...")
+                subprocess.run(["uv", "pip", "install", "-r", str(plugin_root / "requirements.txt"), "--python", str(python_exe)], capture_output=True)
                 progress.advance(task)
             else:
                 progress.advance(task, advance=3) # 跳过环境步骤

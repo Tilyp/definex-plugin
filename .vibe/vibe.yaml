@@ -1,0 +1,112 @@
+# Vibe Coding 配置
+
+project:
+  name: DefineX
+  version: 0.1.0
+  description: 工业级插件开发与编排脚手架工具
+  language: Python
+  python_version: ">=3.9"
+
+design:
+  philosophy: Code-as-Contract
+  
+  principles:
+    - 单一事实来源 (Python 类型注解)
+    - 物理级环境隔离 (libs vendor 模式)
+    - 强契约低代码 (禁止 dict/Any)
+    - 极速开发体验 (热重载/缓存)
+    - 协议同构 (MCP 原生支持)
+
+architecture:
+  layers:
+    - name: CLI
+      description: 命令行入口
+      files:
+        - cli.py
+        
+    - name: Manager
+      description: 业务编排中心
+      files:
+        - manager.py
+        
+    - name: Core
+      description: 核心处理引擎
+      files:
+        - scanner.py
+        - translator.py
+        - validator.py
+        - watcher.py
+        - builder.py
+        - runner.py
+        
+    - name: Runtime
+      description: 运行时环境
+      files:
+        - runtime.py
+        
+    - name: SDK
+      description: 开发者接口
+      files:
+        - sdk/base.py
+        - sdk/context.py
+        - sdk/response.py
+        
+    - name: MCP
+      description: 协议适配
+      files:
+        - mcp_adapter.py
+        - mcp_server.py
+        
+    - name: Storage
+      description: 存储抽象层
+      files:
+        - storage/base.py
+        - storage/factory.py
+
+dependencies:
+  runtime:
+    - PyYAML
+    - rich
+    - click
+    - mcp
+    - fastmcp
+    - uvicorn
+    - starlette
+    - cryptography
+    - watchdog
+    - requests
+    - polars
+    - psutil
+    
+  dev:
+    - pytest
+    - black
+    - isort
+    - mypy
+
+features:
+  - 代码即契约 (Schema-First)
+  - 物理级环境隔离
+  - 强类型建模
+  - 热重载开发
+  - MCP 协议支持
+  - 依赖隔离打包
+  - 配置加密存储
+  - 安全审计
+  - 流式响应
+
+commands:
+  init: dfx plugin init
+  manifest: dfx plugin manifest
+  check: dfx plugin check
+  watch: dfx plugin watch
+  build: dfx plugin build
+  push: dfx plugin push
+  run_native: dfx plugin run native
+  run_mcp: dfx plugin run mcp
+
+build:
+  format: dfxpkg (ZIP)
+  isolation: libs/vendor
+  cache: .deps_hash
+  package_manager: uv

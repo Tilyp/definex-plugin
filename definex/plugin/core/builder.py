@@ -11,6 +11,22 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskPr
 from definex.plugin.core.utils import CommonUtils
 
 
+def _ensure_uv_installed() -> bool:
+    """确保 uv 已安装"""
+    try:
+        subprocess.run(["uv", "--version"], capture_output=True, check=True)
+        return True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        pass
+    
+    try:
+        subprocess.run([sys.executable, "-m", "pip", "install", "uv"], 
+                      capture_output=True, check=True)
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
+
 class PluginBuilder:
     def __init__(self, console, validator):
         """
@@ -88,42 +104,62 @@ class PluginBuilder:
         libs_dir = root / "libs"
         hash_file = libs_dir / ".deps_hash"
 
-        # 如果没有依赖文件，直接跳过
         if not req_file.exists() or req_file.stat().st_size == 0:
             self.console.print("[yellow]⚠️  未发现依赖声明，跳过依赖同步阶段。[/yellow]")
             return True
 
         current_hash = CommonUtils.get_file_hash(req_file)
 
-        # 检查哈希缓存是否匹配
         if libs_dir.exists() and hash_file.exists():
             if hash_file.read_text().strip() == current_hash:
                 self.console.print("[green]✨ 依赖哈希匹配，使用本地缓存 (libs/)。[/green]")
                 return True
 
-        # 执行 pip install -t
         if libs_dir.exists():
             shutil.rmtree(libs_dir)
         libs_dir.mkdir(parents=True)
 
+        if not _ensure_uv_installed():
+            self.console.print("[yellow]⚠️  uv 未安装，回退使用 pip...[/yellow]")
+            return self._sync_dependencies_fallback(root, req_file, libs_dir, hash_file, current_hash)
+
+        try:
+            with self.console.status("[bold blue]正在执行隔离安装 (uv pip install --target libs)..."):
+                result = subprocess.run([
+                    "uv", "pip", "install",
+                    "-r", str(req_file),
+                    "--target", str(libs_dir),
+                    "--no-cache",
+                    "--system"
+                ], capture_output=True, text=True)
+
+                if result.returncode != 0:
+                    self.console.print(f"[yellow]⚠️  uv 安装失败，尝试回退...[/yellow]\n{result.stderr}")
+                    return self._sync_dependencies_fallback(root, req_file, libs_dir, hash_file, current_hash)
+
+                hash_file.write_text(current_hash)
+                return True
+        except Exception as e:
+            self.console.print(f"[yellow]⚠️  uv 执行异常，回退使用 pip: {e}[/yellow]")
+            return self._sync_dependencies_fallback(root, req_file, libs_dir, hash_file, current_hash)
+
+    def _sync_dependencies_fallback(self, root: Path, req_file: Path, libs_dir: Path, hash_file: Path, current_hash: str) -> bool:
+        """回退使用 pip 安装依赖"""
         try:
             with self.console.status("[bold blue]正在执行隔离安装 (pip install -t libs)..."):
                 result = subprocess.run([
                     sys.executable, "-m", "pip", "install",
                     "-r", str(req_file),
                     "--target", str(libs_dir),
-                    "--no-cache-dir",
-                    "--upgrade",
-                    "--quiet"
+                    "--no-cache-dir"
                 ], capture_output=True, text=True)
 
                 if result.returncode != 0:
                     self.console.print(f"[red]❌ Pip 安装失败:[/red]\n{result.stderr}")
                     return False
 
-            # 安装成功后写入哈希
-            hash_file.write_text(current_hash)
-            return True
+                hash_file.write_text(current_hash)
+                return True
         except Exception as e:
             self.console.print(f"[red]❌ 依赖构建异常: {e}[/red]")
             return False

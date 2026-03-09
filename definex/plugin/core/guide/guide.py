@@ -11,7 +11,6 @@ from definex.plugin.config import ConfigManager
 from definex.plugin.core.config_handler import create_config_handler
 from .handlers import ProjectHandler, StatusHandler
 from .views import UIManager
-from ...chat import AICodeEngine
 
 
 class InteractiveGuide:
@@ -64,19 +63,15 @@ class InteractiveGuide:
 
                 # 获取用户选择
                 choice = self.ui.forms.prompt_choice(
-                    ["1", "2", "3", "4", "5", "0"],
+                    ["1", "2", "3", "0"],
                     default="0"
                 )
                 # 处理选择
                 if choice == "1":
-                    self.config_handler.configure_llm(interactive=True)
-                elif choice == "2":
                     self.config_handler.configure_push(interactive=True)
-                elif choice == "3":
+                elif choice == "2":
                     self._handle_project_config()
-                elif choice == "4":
-                    self._handle_ai_programming()
-                elif choice == "5":
+                elif choice == "3":
                     self._handle_show_status()
                 elif choice == "0":
                     self._handle_exit()
@@ -108,12 +103,6 @@ class InteractiveGuide:
             if result is None:  # 用户选择返回
                 break
             self.ui.show_footer()
-
-    def _handle_ai_programming(self) -> None:
-        """处理 AI 编程菜单"""
-        self.console.print("\n[bold cyan]💻 AI 编程辅助[/bold cyan]")
-        code_engine = AICodeEngine(self.console, self.config_mgr)
-        code_engine.chat(self.root_path, "code")
 
     def _handle_show_status(self) -> None:
         """处理显示状态菜单"""
